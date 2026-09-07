@@ -39,15 +39,6 @@ function escapeCell(value) {
     .replaceAll(/\r?\n/g, " ");
 }
 
-function formatDate(value) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(value));
-}
-
 function formatPercent(value) {
   return `${value.toFixed(value >= 10 ? 1 : 2)}%`;
 }
@@ -117,16 +108,15 @@ function escapeXml(value) {
 
 function repositoriesTable(repositories) {
   const rows = repositories.map((repository) => {
-    const description = repository.description || "—";
     const primaryLanguage = repository.language || "—";
-    return `| [${escapeCell(repository.name)}](https://github.com/${owner}/${repository.name}) | ${escapeCell(primaryLanguage)} | ${repository.stargazers_count} | ${formatDate(repository.updated_at)} | ${escapeCell(description)} |`;
+    return `| [${escapeCell(repository.name)}](https://github.com/${owner}/${repository.name}) | ${escapeCell(primaryLanguage)} | ${repository.stargazers_count} |`;
   });
 
   return [
     "## Repositories",
     "",
-    "| Repository | Primary language | Stars | Updated | Description |",
-    "| --- | --- | ---: | --- | --- |",
+    "| Repository | Primary language | Stars |",
+    "| --- | --- | ---: |",
     ...rows,
     "",
   ].join("\n");

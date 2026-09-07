@@ -6,13 +6,13 @@
 
 ## Repositories
 
-| Repository | Primary language | Stars | Updated | Description |
-| --- | --- | ---: | --- | --- |
-| [CanteenOS](https://github.com/FalzzCode/CanteenOS) | TypeScript | 0 | 07 Sept 2026 | Canteen System |
-| [LibSync](https://github.com/FalzzCode/LibSync) | PHP | 0 | 02 Sept 2026 | Project Perpustakaan Digital |
-| [MedikaFlow](https://github.com/FalzzCode/MedikaFlow) | PHP | 0 | 01 Sept 2026 | Sistem Manajemen Klinik |
-| [blindmaze-game](https://github.com/FalzzCode/blindmaze-game) | PHP | 0 | 20 Aug 2026 | BlindMaze Arcade · PHP/Laravel 12 · JavaScript/React · HTML · Tailwind CSS |
-| [fallweb](https://github.com/FalzzCode/fallweb) | HTML | 0 | 16 Dec 2024 | — |
+| Repository | Primary language | Stars |
+| --- | --- | ---: |
+| [CanteenOS](https://github.com/FalzzCode/CanteenOS) | TypeScript | 0 |
+| [LibSync](https://github.com/FalzzCode/LibSync) | PHP | 0 |
+| [MedikaFlow](https://github.com/FalzzCode/MedikaFlow) | PHP | 0 |
+| [blindmaze-game](https://github.com/FalzzCode/blindmaze-game) | PHP | 0 |
+| [fallweb](https://github.com/FalzzCode/fallweb) | HTML | 0 |
 
 ## Languages
 
