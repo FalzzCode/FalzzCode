@@ -181,26 +181,41 @@ function escapeXml(value) {
 
 function activityTable(activity) {
   const collection = activity.user.contributionsCollection;
+  const rows = [
+    ["Contributions", collection.contributionCalendar.totalContributions],
+    ["Commits", collection.totalCommitContributions],
+    ["Pull requests", collection.totalPullRequestContributions],
+    ["Issues", collection.totalIssueContributions],
+    ["Reviews", collection.totalPullRequestReviewContributions],
+  ].map(([label, total]) => `| ${label} | ${total} |`);
+
   return [
     "## Total GitHub activity",
     "",
     '<img src="./assets/activity.svg" alt="Total GitHub activity for the last 12 months" />',
     "",
-    "| Contributions | Commits | Pull requests | Issues | Reviews |",
-    "| ---: | ---: | ---: | ---: | ---: |",
-    `| ${collection.contributionCalendar.totalContributions} | ${collection.totalCommitContributions} | ${collection.totalPullRequestContributions} | ${collection.totalIssueContributions} | ${collection.totalPullRequestReviewContributions} |`,
+    "| Metric | Total |",
+    "| --- | ---: |",
+    ...rows,
     "",
   ].join("\n");
 }
 
 function statsTable(repositories, profile) {
   const stars = repositories.reduce((sum, repository) => sum + repository.stargazers_count, 0);
+  const rows = [
+    ["Public code repos", repositories.length],
+    ["Stars", stars],
+    ["Followers", profile.followers],
+    ["Following", profile.following],
+  ].map(([label, total]) => `| ${label} | ${total} |`);
+
   return [
     "## Account data",
     "",
-    `| Public code repos | Stars | Followers | Following |`,
-    "| ---: | ---: | ---: | ---: |",
-    `| ${repositories.length} | ${stars} | ${profile.followers} | ${profile.following} |`,
+    "| Metric | Total |",
+    "| --- | ---: |",
+    ...rows,
     "",
   ].join("\n");
 }
