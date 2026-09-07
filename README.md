@@ -4,15 +4,13 @@
   <p><a href="https://github.com/FalzzCode">@FalzzCode</a></p>
 </div>
 
-## Repositories
+## Total GitHub activity
 
-| Repository | Primary language | Stars |
-| --- | --- | ---: |
-| [CanteenOS](https://github.com/FalzzCode/CanteenOS) | TypeScript | 0 |
-| [LibSync](https://github.com/FalzzCode/LibSync) | PHP | 0 |
-| [MedikaFlow](https://github.com/FalzzCode/MedikaFlow) | PHP | 0 |
-| [blindmaze-game](https://github.com/FalzzCode/blindmaze-game) | PHP | 0 |
-| [fallweb](https://github.com/FalzzCode/fallweb) | HTML | 0 |
+<img src="./assets/activity.svg" alt="Total GitHub activity for the last 12 months" />
+
+| Contributions | Commits | Pull requests | Issues | Reviews |
+| ---: | ---: | ---: | ---: | ---: |
+| 98 | 93 | 1 | 0 | 0 |
 
 ## Languages
 

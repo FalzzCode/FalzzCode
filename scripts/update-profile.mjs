@@ -1,5 +1,4 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 
 const owner = "FalzzCode";
 const profileRepository = owner;
@@ -31,6 +30,19 @@ async function github(path) {
     throw new Error(`GitHub API ${response.status} for ${path}: ${await response.text()}`);
   }
   return response.json();
+}
+
+async function githubGraphql(query, variables) {
+  const response = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: { ...apiHeaders, "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+  const payload = await response.json();
+  if (!response.ok || payload.errors) {
+    throw new Error(`GitHub GraphQL ${response.status}: ${JSON.stringify(payload.errors ?? payload)}`);
+  }
+  return payload.data;
 }
 
 function escapeCell(value) {
@@ -97,6 +109,67 @@ function languageSvg(languages) {
 </svg>`;
 }
 
+function activityLevel(day) {
+  const levels = {
+    NONE: 0,
+    FIRST_QUARTILE: 1,
+    SECOND_QUARTILE: 2,
+    THIRD_QUARTILE: 3,
+    FOURTH_QUARTILE: 4,
+  };
+  return levels[day.contributionLevel] ?? (day.contributionCount > 0 ? 2 : 0);
+}
+
+function activitySvg(activity) {
+  const width = 880;
+  const gridX = 24;
+  const gridY = 76;
+  const cell = 11;
+  const gap = 3;
+  const weeks = activity.contributionCalendar.weeks;
+  const grid = weeks.map((week, weekIndex) => week.contributionDays.map((day, dayIndex) => {
+    const x = gridX + weekIndex * (cell + gap);
+    const y = gridY + dayIndex * (cell + gap);
+    return `<rect class="level-${activityLevel(day)}" x="${x}" y="${y}" width="${cell}" height="${cell}" rx="2"><title>${escapeXml(day.date)}: ${day.contributionCount} contributions</title></rect>`;
+  }).join("")).join("");
+  const legend = [0, 1, 2, 3, 4].map((level, index) => (
+    `<rect class="level-${level}" x="${width - 126 + index * 19}" y="${gridY + 102}" width="11" height="11" rx="2" />`
+  )).join("");
+  const total = activity.contributionCalendar.totalContributions;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="210" viewBox="0 0 ${width} 210" role="img" aria-labelledby="title desc">
+  <title id="title">${total} GitHub contributions in the last 12 months</title>
+  <desc id="desc">Contribution activity for ${owner} across the last 12 months.</desc>
+  <style>
+    .card { fill: #ffffff; stroke: #e2e8f0; }
+    .title { fill: #0f172a; font: 700 19px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .subtitle, .legend-label { fill: #64748b; font: 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .level-0 { fill: #ebedf0; }
+    .level-1 { fill: #9be9a8; }
+    .level-2 { fill: #40c463; }
+    .level-3 { fill: #30a14e; }
+    .level-4 { fill: #216e39; }
+    @media (prefers-color-scheme: dark) {
+      .card { fill: #161b22; stroke: #30363d; }
+      .title { fill: #f0f6fc; }
+      .subtitle, .legend-label { fill: #8b949e; }
+      .level-0 { fill: #21262d; }
+      .level-1 { fill: #0e4429; }
+      .level-2 { fill: #006d32; }
+      .level-3 { fill: #26a641; }
+      .level-4 { fill: #39d353; }
+    }
+  </style>
+  <rect class="card" x="0.5" y="0.5" width="${width - 1}" height="209" rx="12" />
+  <text x="24" y="29" class="title">${total} contributions</text>
+  <text x="24" y="48" class="subtitle">GitHub activity · last 12 months</text>
+  <g>${grid}</g>
+  <text x="${width - 185}" y="${gridY + 111}" class="legend-label">Less</text>
+  <g>${legend}</g>
+  <text x="${width - 24}" y="${gridY + 111}" text-anchor="end" class="legend-label">More</text>
+</svg>`;
+}
+
 function escapeXml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -106,18 +179,16 @@ function escapeXml(value) {
     .replaceAll("'", "&apos;");
 }
 
-function repositoriesTable(repositories) {
-  const rows = repositories.map((repository) => {
-    const primaryLanguage = repository.language || "—";
-    return `| [${escapeCell(repository.name)}](https://github.com/${owner}/${repository.name}) | ${escapeCell(primaryLanguage)} | ${repository.stargazers_count} |`;
-  });
-
+function activityTable(activity) {
+  const collection = activity.user.contributionsCollection;
   return [
-    "## Repositories",
+    "## Total GitHub activity",
     "",
-    "| Repository | Primary language | Stars |",
-    "| --- | --- | ---: |",
-    ...rows,
+    '<img src="./assets/activity.svg" alt="Total GitHub activity for the last 12 months" />',
+    "",
+    "| Contributions | Commits | Pull requests | Issues | Reviews |",
+    "| ---: | ---: | ---: | ---: | ---: |",
+    `| ${collection.contributionCalendar.totalContributions} | ${collection.totalCommitContributions} | ${collection.totalPullRequestContributions} | ${collection.totalIssueContributions} | ${collection.totalPullRequestReviewContributions} |`,
     "",
   ].join("\n");
 }
@@ -135,10 +206,40 @@ function statsTable(repositories, profile) {
 }
 
 async function main() {
+  const to = new Date();
+  const from = new Date(to);
+  from.setUTCFullYear(from.getUTCFullYear() - 1);
+  const activityQuery = `
+    query($login: String!, $from: DateTime!, $to: DateTime!) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          totalCommitContributions
+          totalIssueContributions
+          totalPullRequestContributions
+          totalPullRequestReviewContributions
+          contributionCalendar {
+            totalContributions
+            weeks {
+              contributionDays {
+                contributionCount
+                contributionLevel
+                date
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
   const [profile, allRepositories] = await Promise.all([
     github(`/users/${owner}`),
     github(`/users/${owner}/repos?per_page=100&sort=updated`),
   ]);
+  const activity = await githubGraphql(activityQuery, {
+    login: owner,
+    from: from.toISOString(),
+    to: to.toISOString(),
+  });
   const repositories = allRepositories.filter((repository) => (
     !repository.private && repository.name !== profileRepository
   ));
@@ -163,7 +264,7 @@ async function main() {
     '  <p><a href="https://github.com/FalzzCode">@FalzzCode</a></p>',
     "</div>",
     "",
-    repositoriesTable(repositories),
+    activityTable(activity),
     "## Languages",
     "",
     '<img src="./assets/languages.svg" alt="Languages used across public repositories" />',
@@ -176,8 +277,9 @@ async function main() {
   const assetsDirectory = new URL("./assets/", root);
   await mkdir(assetsDirectory, { recursive: true });
   await writeFile(new URL("./README.md", root), readme, "utf8");
+  await writeFile(new URL("./assets/activity.svg", root), activitySvg(activity.user.contributionsCollection), "utf8");
   await writeFile(new URL("./assets/languages.svg", root), languageSvg(languages), "utf8");
-  console.log(`Updated ${repositories.length} repositories and ${languages.length} languages.`);
+  console.log(`Updated ${repositories.length} repositories, ${languages.length} languages, and ${activity.user.contributionsCollection.contributionCalendar.totalContributions} contributions.`);
 }
 
 await main();
