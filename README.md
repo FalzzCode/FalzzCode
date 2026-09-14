@@ -10,8 +10,8 @@
 
 | Metric | Total |
 | --- | ---: |
-| Contributions | 98 |
-| Commits | 93 |
+| Contributions | 109 |
+| Commits | 103 |
 | Pull requests | 1 |
 | Issues | 0 |
 | Reviews | 0 |
